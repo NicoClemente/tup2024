@@ -16,9 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -128,4 +126,93 @@ public class ClienteServiceTest {
     //Agregar una CA$ y CC$ --> success 2 cuentas, titular peperino
     //Agregar una CA$ y CAU$S --> success 2 cuentas, titular peperino...
     //Testear clienteService.buscarPorDni
+
+    @Test
+    public void testAgregarCajaAhorroYCuentaCorriente() throws TipoCuentaAlreadyExistsException {
+        Cliente pepeRino = new Cliente();
+        pepeRino.setDni(26456439);
+        pepeRino.setNombre("Pepe");
+        pepeRino.setApellido("Rino");
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3,25));
+        pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
+
+        Cuenta cajaAhorro = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(500000)
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
+
+        Cuenta cuentaCorriente = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(1000000)
+                .setTipoCuenta(TipoCuenta.CUENTA_CORRIENTE);
+
+        when(clienteDao.find(26456439, true)).thenReturn(pepeRino);
+
+        clienteService.agregarCuenta(cajaAhorro, pepeRino.getDni());
+        clienteService.agregarCuenta(cuentaCorriente, pepeRino.getDni());
+
+        verify(clienteDao, times(2)).save(pepeRino);
+
+        assertEquals(2, pepeRino.getCuentas().size());
+        assertTrue(pepeRino.getCuentas().contains(cajaAhorro));
+        assertTrue(pepeRino.getCuentas().contains(cuentaCorriente));
+        assertEquals(pepeRino, cajaAhorro.getTitular());
+        assertEquals(pepeRino, cuentaCorriente.getTitular());
+    }
+
+    @Test
+    public void testAgregarCajaAhorroEnPesosYDolares() throws TipoCuentaAlreadyExistsException {
+        Cliente pepeRino = new Cliente();
+        pepeRino.setDni(26456439);
+        pepeRino.setNombre("Pepe");
+        pepeRino.setApellido("Rino");
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3,25));
+        pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
+
+        Cuenta cajaAhorroPesos = new Cuenta()
+                .setMoneda(TipoMoneda.PESOS)
+                .setBalance(500000)
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
+
+        Cuenta cajaAhorroDolares = new Cuenta()
+                .setMoneda(TipoMoneda.DOLARES)
+                .setBalance(10000)
+                .setTipoCuenta(TipoCuenta.CAJA_AHORRO);
+
+        when(clienteDao.find(26456439, true)).thenReturn(pepeRino);
+
+        clienteService.agregarCuenta(cajaAhorroPesos, pepeRino.getDni());
+        clienteService.agregarCuenta(cajaAhorroDolares, pepeRino.getDni());
+
+        verify(clienteDao, times(2)).save(pepeRino);
+
+        assertEquals(2, pepeRino.getCuentas().size());
+        assertTrue(pepeRino.getCuentas().contains(cajaAhorroPesos));
+        assertTrue(pepeRino.getCuentas().contains(cajaAhorroDolares));
+        assertEquals(pepeRino, cajaAhorroPesos.getTitular());
+        assertEquals(pepeRino, cajaAhorroDolares.getTitular());
+    }
+
+    @Test
+    public void testBuscarPorDniExito() {
+        Cliente pepeRino = new Cliente();
+        pepeRino.setDni(26456439);
+        pepeRino.setNombre("Pepe");
+        pepeRino.setApellido("Rino");
+        pepeRino.setFechaNacimiento(LocalDate.of(1978, 3,25));
+        pepeRino.setTipoPersona(TipoPersona.PERSONA_FISICA);
+
+        when(clienteDao.find(26456439, true)).thenReturn(pepeRino);
+
+        Cliente clienteEncontrado = clienteService.buscarClientePorDni(26456439);
+
+        assertEquals(pepeRino, clienteEncontrado);
+    }
+
+    @Test
+    public void testBuscarPorDniFalla() {
+        when(clienteDao.find(99999999, true)).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () -> clienteService.buscarClientePorDni(99999999));
+    }
 }

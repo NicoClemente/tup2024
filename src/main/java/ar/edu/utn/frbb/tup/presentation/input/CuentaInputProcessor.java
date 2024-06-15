@@ -1,11 +1,10 @@
 package ar.edu.utn.frbb.tup.presentation.input;
 
-import ar.edu.utn.frbb.tup.model.Cliente;
 import ar.edu.utn.frbb.tup.model.Cuenta;
 import ar.edu.utn.frbb.tup.model.TipoCuenta;
 import ar.edu.utn.frbb.tup.model.TipoMoneda;
-import ar.edu.utn.frbb.tup.model.exception.ClienteAlreadyExistsException;
 import ar.edu.utn.frbb.tup.model.exception.CuentaAlreadyExistsException;
+import ar.edu.utn.frbb.tup.model.exception.CuentaNoSoportadaException;
 import ar.edu.utn.frbb.tup.model.exception.TipoCuentaAlreadyExistsException;
 import ar.edu.utn.frbb.tup.persistence.CuentaDao;
 import ar.edu.utn.frbb.tup.service.ClienteService;
@@ -16,7 +15,7 @@ import java.time.LocalDate;
 import java.util.Scanner;
 
 @Component
-public class CuentaInputProcessor extends BaseInputProcessor{
+public class CuentaInputProcessor extends BaseInputProcessor {
     ClienteService clienteService;
     CuentaService cuentaService = new CuentaService();
     CuentaDao cuentaDao = new CuentaDao();
@@ -66,6 +65,9 @@ public class CuentaInputProcessor extends BaseInputProcessor{
             return;
         } catch (CuentaAlreadyExistsException e) {
             throw new RuntimeException(e);
+        } catch (CuentaNoSoportadaException e) {
+            System.out.println("Error: " + e.getMessage());
+            return;
         } catch (Exception e) {
             System.out.println("Error al dar de alta la cuenta: " + e.getMessage());
         } finally {
